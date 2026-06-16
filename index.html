@@ -89,8 +89,11 @@
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     transition: background var(--tr), color var(--tr), opacity var(--tr), border-color var(--tr);
   }
-  #pin-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); opacity: 1; }
+  @media (hover: hover) {
+    #pin-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); opacity: 1; }
+  }
   #pin-btn.pinned { color: var(--accent); background: rgba(79,142,247,0.18); border-color: rgba(79,142,247,0.45); opacity: 1; }
+  #pin-btn.ui-hidden-fade { opacity: 0.12 !important; }
 
   /* ── Top bar ── */
   #topbar {
@@ -478,6 +481,9 @@
     #cam2-select { max-width: 60px; font-size: 11px; }
     .cam-label { font-size: 9px; }
   }
+  /* compact: screen+cam2 hidden → single row, wider main select */
+  #topbar.compact .topbar-row-break { display: none !important; }
+  #topbar.compact #source-select { max-width: 160px; }
 
   @media (max-width: 540px) {
     #controls { gap: 5px; padding: 10px 6px 12px; }
@@ -583,7 +589,7 @@
       <button class="torch-btn" id="torch1-btn" style="display:none" data-tip="Flashlight">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>
       </button>
-      <span class="top-sep"></span>
+      <span class="top-sep" id="cam2-sep"></span>
       <div id="cam2-group" class="cam-group">
         <input type="checkbox" class="cam-check" id="cam2-check">
         <span class="cam-label" id="t-sub-cam">Sub</span>
@@ -597,7 +603,7 @@
           <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
         </svg>
       </button>
-      <span class="top-sep"></span>
+      <span class="top-sep" id="screen-sep"></span>
       <div class="topbar-row-break"></div>
       <button class="btn-top" id="layout-btn" data-tip="Layout (V)" style="display:none">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -1714,6 +1720,7 @@ function showUI() {
   uiVisible = true;
   lastShowTime = Date.now();
   uiLayer.classList.remove('hidden');
+  pinBtn.classList.remove('ui-hidden-fade');
   if (!uiPinned && !pipActive) startHideTimer();
 }
 function hideUI() {
@@ -1724,6 +1731,7 @@ function hideUI() {
   if (elapsed < minMs) { clearTimeout(hideTimer); hideTimer = setTimeout(hideUI, minMs - elapsed); return; }
   uiVisible = false;
   uiLayer.classList.add('hidden');
+  pinBtn.classList.add('ui-hidden-fade');
   zoomPopup.classList.remove('open');
   keystonePanel.classList.remove('open');
   gridPanel.classList.remove('open');
@@ -2233,7 +2241,16 @@ function loadPrimCamState(deviceId) {
 function disableCam2UI() {
   dualCamSupported = false;
   document.getElementById('cam2-group').style.display = 'none';
+  const cam2Sep = document.getElementById('cam2-sep');
+  if (cam2Sep) cam2Sep.style.display = 'none';
+  updateTopbarCompact();
   repositionPinBtn();
+}
+function updateTopbarCompact() {
+  if (!isMobile()) return;
+  const cam2Hidden = !dualCamSupported;
+  const screenHidden = !canScreenShare;
+  document.getElementById('topbar').classList.toggle('compact', cam2Hidden && screenHidden);
 }
 
 async function probeDualCam() {
@@ -3384,10 +3401,12 @@ startBtn.addEventListener('click', async () => {
 });
 if (!canScreenShare) {
   const screenBtn = document.getElementById('screen-btn');
-  screenBtn.disabled = true;
-  setTip('screen-btn', T.screen_unavail || 'Screen share not supported');
+  screenBtn.style.display = 'none';
+  const screenSep = document.getElementById('screen-sep');
+  if (screenSep) screenSep.style.display = 'none';
   const screenOpt = cam2Select.querySelector('option[value="__screen__"]');
   if (screenOpt) screenOpt.disabled = true;
+  updateTopbarCompact();
 }
 
 document.getElementById('pan-reset-btn').addEventListener('click', () => {
