@@ -20,7 +20,7 @@
 
   /* ── Viewport ── */
   #viewport { flex: 1; position: relative; overflow: hidden; background: #000; --split: 50%; }
-  .pane { position: absolute; overflow: hidden; background: #000; }
+  .pane { position: absolute; overflow: hidden; background: transparent; }
   .pane video { width: 100%; height: 100%; object-fit: contain; user-select: none; touch-action: none; }
   #video { transform-origin: center center; transition: transform 0.1s ease; }
   /* single */
@@ -344,7 +344,7 @@
   .spinner { width: 38px; height: 38px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   #loading p { color: var(--text2); font-size: 14px; }
-  #nocam { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: var(--bg); }
+  #nocam { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: transparent; }
   #nocam.hidden { display: none; }
   #nocam svg { opacity: 0.2; }
   #nocam p { color: var(--text2); font-size: 14px; text-align: center; padding: 0 32px; line-height: 1.5; }
@@ -491,6 +491,27 @@
   body.hc #start-btn { background: #fff; color: #000; }
   body.hc .seg-btn, body.hc .sz-btn, body.hc .hl-sz-btn, body.hc .shape-btn, body.hc .toggle-btn, body.hc .reset-btn { border-color: #fff; color: #fff; }
   body.hc .seg-btn.active, body.hc .sz-btn.active, body.hc .hl-sz-btn.active, body.hc .shape-btn.active, body.hc .toggle-btn.active { background: #fff; color: #000; }
+
+  /* ── Top-bar separators & camera labels ── */
+  .top-sep { width: 1px; height: 22px; background: rgba(255,255,255,0.2); flex-shrink: 0; margin: 0 3px; }
+  .cam-label { font-size: 10px; font-weight: 600; color: var(--text2); white-space: nowrap; user-select: none; flex-shrink: 0; letter-spacing: 0.02em; }
+
+  /* ── Background color picker ── */
+  .bg-color-pick { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background: conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red); border: 2px solid rgba(255,255,255,0.25); cursor: pointer; position: relative; overflow: hidden; }
+  .bg-color-pick input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; border: none; padding: 0; }
+
+  /* ── Copy URL button (in About panel) ── */
+  .copy-url-btn { background: none; border: 1px solid var(--border); border-radius: 4px; color: var(--text2); cursor: pointer; padding: 2px 4px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; transition: background var(--tr), color var(--tr); }
+  .copy-url-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+  .url-row { display: flex; align-items: center; gap: 5px; }
+
+  /* ── Light UI theme (invert ui-layer so icons/panels appear black-on-white) ── */
+  body.ui-dark #ui-layer { filter: invert(1) hue-rotate(180deg); }
+  body.ui-dark #pin-btn  { filter: invert(1) hue-rotate(180deg); }
+  body.ui-dark #toast    { filter: invert(1) hue-rotate(180deg); }
+  /* Re-invert swatches so they keep their real colors through the parent inversion */
+  body.ui-dark .swatch, body.ui-dark .hl-swatch { filter: invert(1) hue-rotate(180deg); }
+  body.ui-dark .bg-color-pick { filter: invert(1) hue-rotate(180deg); }
 </style>
 </head>
 <body>
@@ -544,24 +565,27 @@
         </svg>
       </div>
       <input type="checkbox" class="cam-check" id="cam1-check">
+      <span class="cam-label" id="t-main-cam">Main</span>
       <select id="source-select"></select>
       <button class="torch-btn" id="torch1-btn" style="display:none" data-tip="Flashlight">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>
       </button>
-      <div id="cam2-group" class="cam-group" style="display:none">
+      <span class="top-sep"></span>
+      <div id="cam2-group" class="cam-group">
         <input type="checkbox" class="cam-check" id="cam2-check">
+        <span class="cam-label" id="t-sub-cam">Sub</span>
         <select id="cam2-select"></select>
         <button class="torch-btn" id="torch2-btn" style="display:none" data-tip="Flashlight">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9z"/></svg>
         </button>
       </div>
-      <div class="topbar-row-break"></div>
-      <input type="checkbox" class="cam-check" id="screen-check" style="display:none">
       <button class="btn-top" id="screen-btn">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
         </svg>
       </button>
+      <span class="top-sep"></span>
+      <div class="topbar-row-break"></div>
       <button class="btn-top" id="layout-btn" data-tip="Layout (V)" style="display:none">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <rect x="3" y="4" width="18" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20"/>
@@ -624,6 +648,14 @@
       <button class="btn" id="keystone-btn" data-tip="Keystone (T)">
         <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
           <path d="M7 5h10l2.5 14H4.5z" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <!-- background settings -->
+      <button class="btn" id="bg-btn" data-tip="Background (B)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="9" cy="9" r="1.5" fill="currentColor" stroke="none"/>
+          <polyline points="21 15 16 10 5 21"/>
         </svg>
       </button>
       <!-- quality (moved here, next to keystone) -->
@@ -877,6 +909,41 @@
     </button>
   </div>
 
+  <!-- Background panel -->
+  <div id="bg-panel" class="popup">
+    <div class="panel-row" style="flex-wrap:wrap; gap:6px">
+      <span class="panel-label" id="t-bg-color">Color</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+        <div class="swatch bg-sw active" data-bg="#000000" style="background:#000;outline:1px solid rgba(255,255,255,0.3)"></div>
+        <div class="swatch bg-sw" data-bg="#ffffff" style="background:#fff;outline:1px solid rgba(255,255,255,0.3)"></div>
+        <div class="swatch bg-sw" data-bg="#ff2222" style="background:#ff2222"></div>
+        <div class="swatch bg-sw" data-bg="#ff8800" style="background:#ff8800"></div>
+        <div class="swatch bg-sw" data-bg="#ffee00" style="background:#ffee00"></div>
+        <div class="swatch bg-sw" data-bg="#22dd44" style="background:#22dd44"></div>
+        <div class="swatch bg-sw" data-bg="#00ccff" style="background:#00ccff"></div>
+        <div class="swatch bg-sw" data-bg="#4488ff" style="background:#4488ff"></div>
+        <div class="swatch bg-sw" data-bg="#cc44ff" style="background:#cc44ff"></div>
+        <label class="bg-color-pick" title="Custom color">
+          <input type="color" id="bg-color-picker" value="#000000">
+        </label>
+      </div>
+    </div>
+    <div class="panel-row" style="gap:6px">
+      <span class="panel-label" id="t-bg-image">Image</span>
+      <button class="reset-btn" id="bg-image-btn">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+        <span id="t-bg-image-btn">Load</span>
+      </button>
+      <input type="file" id="bg-image-file" accept="image/*" style="display:none">
+      <button class="reset-btn" id="bg-clear-btn"><span id="t-bg-clear">Reset</span></button>
+    </div>
+    <div class="panel-row" style="gap:6px">
+      <span class="panel-label" id="t-ui-theme">UI</span>
+      <button class="seg-btn active" id="ui-theme-light"><span id="t-ui-light">◎ White</span></button>
+      <button class="seg-btn" id="ui-theme-dark"><span id="t-ui-dark-btn">◎ Black</span></button>
+    </div>
+  </div>
+
   <!-- Mode panel (laser + spotlight + ruler options) -->
   <div id="mode-panel">
     <!-- Laser options -->
@@ -1068,11 +1135,26 @@
         <div class="settings-section about-links" style="margin-top:16px">
           <div class="about-link">
             <span id="about-repo-label">Repository</span>
-            <a href="https://github.com/akichika/doc-camera" target="_blank" rel="noopener">https://github.com/akichika/doc-camera</a>
+            <div class="url-row">
+              <a href="https://github.com/akichika/doc-camera" target="_blank" rel="noopener">https://github.com/akichika/doc-camera</a>
+              <button class="copy-url-btn" data-copy="https://github.com/akichika/doc-camera" title="Copy URL">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+            <span id="about-repo-note" style="color:var(--text2);font-size:10px;margin-top:2px"></span>
           </div>
           <div class="about-link">
             <span id="about-url-label">Public URL</span>
-            <a href="https://akichika.github.io/doc-camera/" target="_blank" rel="noopener">https://akichika.github.io/doc-camera/</a>
+            <div class="url-row">
+              <a href="https://akichika.github.io/doc-camera/" target="_blank" rel="noopener">https://akichika.github.io/doc-camera/</a>
+              <button class="copy-url-btn" data-copy="https://akichika.github.io/doc-camera/" title="Copy URL">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+            </div>
+          </div>
+          <div class="about-link" style="margin-top:6px">
+            <span id="about-author-label">Author</span>
+            <a href="http://x.com/akichika" target="_blank" rel="noopener">@akichika</a>
           </div>
         </div>
       </div>
@@ -1109,6 +1191,10 @@ const LANGS = {
     tab_about:'About', tagline:'A simple document camera app',
     about_desc:'A simple, modern document camera for the web. Choose a camera or share your screen, then zoom, freeze, annotate with a laser or spotlight, overlay grids and rulers, fine-tune the image, and save screenshots — all in your browser.',
     about_repo:'Repository', about_url:'Public URL',
+    about_bug:'※ Pull Requests welcome ※ Post suggestions & bug reports in Issues', about_author:'Author',
+    main_cam:'Main', sub_cam:'Sub',
+    background:'Background', bg_color:'Color', bg_image:'Image', bg_load:'Load', bg_clear:'Reset', ui_theme:'UI', ui_white:'◎ White', ui_black:'◎ Black',
+    copied:'Copied!',
     sc_space:'Freeze', sc_c:'Screenshot', sc_m:'Mirror', sc_r:'Rotate', sc_f:'Fullscreen',
     sc_p:'PiP', sc_s:'Screen share', sc_0:'Reset zoom', sc_z:'Zoom panel',
     sc_l:'Laser pointer', sc_y:'Highlighter', sc_h:'Spotlight', sc_u:'Ruler', sc_g:'Grid', sc_q:'Image', sc_t:'Keystone',
@@ -1138,6 +1224,10 @@ const LANGS = {
     tab_about:'このアプリについて', tagline:'シンプルな書画カメラアプリ',
     about_desc:'シンプルでモダンなWeb書画カメラ。カメラ選択や画面共有をして、ズーム・静止・レーザー/スポットライト・グリッド/ルーラー表示・画質調整・スクリーンショット保存などをブラウザだけで行えます。',
     about_repo:'リポジトリ', about_url:'公開URL',
+    about_bug:'※Pull Request歓迎 ※改善提案・バグ報告はIssuesに投稿してください', about_author:'作者',
+    main_cam:'メイン', sub_cam:'サブ',
+    background:'背景', bg_color:'色', bg_image:'画像', bg_load:'読込', bg_clear:'リセット', ui_theme:'UI', ui_white:'◎ 白', ui_black:'◎ 黒',
+    copied:'コピーしました',
     sc_space:'静止', sc_c:'スクリーンショット', sc_m:'左右反転', sc_r:'回転', sc_f:'全画面',
     sc_p:'PiP', sc_s:'画面共有', sc_0:'ズームリセット', sc_z:'ズームパネル',
     sc_l:'レーザー', sc_y:'蛍光ペン', sc_h:'スポットライト', sc_u:'ルーラー', sc_g:'グリッド', sc_q:'画質調整', sc_t:'台形補正',
@@ -1164,6 +1254,10 @@ const LANGS = {
     tab_about:'关于',
     about_desc:'一个简单现代的网页实物投影仪。选择摄像头或共享屏幕，然后缩放、暂停、用激光笔或聚光灯标注、叠加网格和标尺、调整画质并保存截图——全部在浏览器中完成。',
     about_repo:'代码库', about_url:'公开网址',
+    about_bug:'※ 欢迎Pull Request ※ 改善建议和错误报告请在Issues中发布', about_author:'作者',
+    main_cam:'主', sub_cam:'副',
+    background:'背景', bg_color:'颜色', bg_image:'图片', bg_load:'加载', bg_clear:'重置', ui_theme:'界面', ui_white:'◎ 白', ui_black:'◎ 黑',
+    copied:'已复制',
     sc_space:'暂停', sc_c:'截图', sc_m:'镜像', sc_r:'旋转', sc_f:'全屏',
     sc_p:'画中画', sc_s:'共享屏幕', sc_0:'重置缩放', sc_z:'缩放面板',
     sc_l:'激光笔', sc_y:'荧光笔', sc_h:'聚光灯', sc_u:'标尺', sc_g:'网格', sc_q:'画质', sc_t:'梯形校正',
@@ -1190,6 +1284,10 @@ const LANGS = {
     tab_about:'정보',
     about_desc:'간단하고 현대적인 웹 실물화상기. 카메라를 선택하거나 화면을 공유한 뒤 확대·정지·레이저/스포트라이트 주석·격자/자 표시·화질 조정·스크린샷 저장을 모두 브라우저에서 할 수 있습니다.',
     about_repo:'저장소', about_url:'공개 URL',
+    about_bug:'※ Pull Request 환영 ※ 개선 제안·버그 보고는 Issues에 투고해 주세요', about_author:'작성자',
+    main_cam:'메인', sub_cam:'서브',
+    background:'배경', bg_color:'색상', bg_image:'이미지', bg_load:'불러오기', bg_clear:'초기화', ui_theme:'UI', ui_white:'◎ 흰색', ui_black:'◎ 검정',
+    copied:'복사됨',
     sc_space:'정지', sc_c:'스크린샷', sc_m:'미러', sc_r:'회전', sc_f:'전체화면',
     sc_p:'PiP', sc_s:'화면 공유', sc_0:'줌 재설정', sc_z:'줌 패널',
     sc_l:'레이저', sc_y:'형광펜', sc_h:'스포트라이트', sc_u:'자', sc_g:'격자', sc_q:'화질', sc_t:'키스톤',
@@ -1216,6 +1314,10 @@ const LANGS = {
     tab_about:'Acerca de',
     about_desc:'Una cámara de documentos sencilla y moderna para la web. Elige una cámara o comparte tu pantalla, luego haz zoom, congela, anota con láser o foco, superpone cuadrículas y reglas, ajusta la imagen y guarda capturas — todo en tu navegador.',
     about_repo:'Repositorio', about_url:'URL pública',
+    about_bug:'※ Se aceptan Pull Requests ※ Sugerencias y errores en Issues', about_author:'Autor',
+    main_cam:'Principal', sub_cam:'Secundaria',
+    background:'Fondo', bg_color:'Color', bg_image:'Imagen', bg_load:'Cargar', bg_clear:'Restablecer', ui_theme:'UI', ui_white:'◎ Blanco', ui_black:'◎ Negro',
+    copied:'¡Copiado!',
     sc_space:'Congelar', sc_c:'Captura', sc_m:'Espejo', sc_r:'Rotar', sc_f:'Pantalla completa',
     sc_p:'PiP', sc_s:'Pantalla', sc_0:'Reset zoom', sc_z:'Panel zoom',
     sc_l:'Láser', sc_y:'Marcador', sc_h:'Foco', sc_u:'Regla', sc_g:'Cuadrícula', sc_q:'Imagen', sc_t:'Trapezoidal',
@@ -1242,6 +1344,10 @@ const LANGS = {
     tab_about:'À propos',
     about_desc:'Une caméra de document simple et moderne pour le web. Choisissez une caméra ou partagez votre écran, puis zoomez, figez, annotez au laser ou au projecteur, superposez grilles et règles, ajustez l’image et enregistrez des captures — le tout dans votre navigateur.',
     about_repo:'Dépôt', about_url:'URL publique',
+    about_bug:'※ Pull Requests bienvenus ※ Suggestions et bugs dans Issues', about_author:'Auteur',
+    main_cam:'Principale', sub_cam:'Secondaire',
+    background:'Fond', bg_color:'Couleur', bg_image:'Image', bg_load:'Charger', bg_clear:'Réinitialiser', ui_theme:'Interface', ui_white:'◎ Blanc', ui_black:'◎ Noir',
+    copied:'Copié !',
     sc_space:'Geler', sc_c:'Capture', sc_m:'Miroir', sc_r:'Pivoter', sc_f:'Plein écran',
     sc_p:'PiP', sc_s:'Écran', sc_0:'Reset zoom', sc_z:'Panneau zoom',
     sc_l:'Laser', sc_y:'Surligneur', sc_h:'Projecteur', sc_u:'Règle', sc_g:'Grille', sc_q:'Image', sc_t:'Trapèze',
@@ -1268,6 +1374,10 @@ const LANGS = {
     tab_about:'Info',
     about_desc:'Eine einfache, moderne Dokumentenkamera fürs Web. Wähle eine Kamera oder teile deinen Bildschirm, dann zoomen, einfrieren, mit Laser oder Spotlight markieren, Raster und Lineale einblenden, das Bild anpassen und Screenshots speichern — alles im Browser.',
     about_repo:'Repository', about_url:'Öffentliche URL',
+    about_bug:'※ Pull Requests willkommen ※ Vorschläge & Fehler in Issues melden', about_author:'Autor',
+    main_cam:'Haupt', sub_cam:'Neben',
+    background:'Hintergrund', bg_color:'Farbe', bg_image:'Bild', bg_load:'Laden', bg_clear:'Zurücksetzen', ui_theme:'UI', ui_white:'◎ Weiß', ui_black:'◎ Schwarz',
+    copied:'Kopiert!',
     sc_space:'Einfrieren', sc_c:'Screenshot', sc_m:'Spiegeln', sc_r:'Drehen', sc_f:'Vollbild',
     sc_p:'PiP', sc_s:'Bildschirm', sc_0:'Zoom reset', sc_z:'Zoom-Panel',
     sc_l:'Laser', sc_y:'Textmarker', sc_h:'Spotlight', sc_u:'Lineal', sc_g:'Raster', sc_q:'Bild', sc_t:'Trapez',
@@ -1294,6 +1404,10 @@ const LANGS = {
     tab_about:'Sobre',
     about_desc:'Uma câmera de documentos simples e moderna para a web. Escolha uma câmera ou compartilhe a tela, depois amplie, congele, anote com laser ou holofote, sobreponha grades e réguas, ajuste a imagem e salve capturas — tudo no navegador.',
     about_repo:'Repositório', about_url:'URL pública',
+    about_bug:'※ Pull Requests bem-vindos ※ Sugestões e bugs nos Issues', about_author:'Autor',
+    main_cam:'Principal', sub_cam:'Secundária',
+    background:'Fundo', bg_color:'Cor', bg_image:'Imagem', bg_load:'Carregar', bg_clear:'Redefinir', ui_theme:'Interface', ui_white:'◎ Branco', ui_black:'◎ Preto',
+    copied:'Copiado!',
     sc_space:'Congelar', sc_c:'Captura', sc_m:'Espelho', sc_r:'Rotar', sc_f:'Tela cheia',
     sc_p:'PiP', sc_s:'Tela', sc_0:'Reset zoom', sc_z:'Painel zoom',
     sc_l:'Laser', sc_y:'Marcador', sc_h:'Holofote', sc_u:'Régua', sc_g:'Grade', sc_q:'Imagem', sc_t:'Trapézio',
@@ -1320,6 +1434,10 @@ const LANGS = {
     tab_about:'حول',
     about_desc:'كاميرا مستندات بسيطة وعصرية للويب. اختر كاميرا أو شارك شاشتك، ثم كبّر وجمّد وأشّر بالليزر أو بقعة الضوء، وأضف الشبكات والمساطر، واضبط الصورة واحفظ لقطات — كل ذلك في متصفحك.',
     about_repo:'المستودع', about_url:'الرابط العام',
+    about_bug:'※ Pull Requests مرحب بها ※ اقتراحات وتقارير الأخطاء في Issues', about_author:'المؤلف',
+    main_cam:'رئيسية', sub_cam:'فرعية',
+    background:'الخلفية', bg_color:'لون', bg_image:'صورة', bg_load:'تحميل', bg_clear:'إعادة', ui_theme:'واجهة', ui_white:'◎ أبيض', ui_black:'◎ أسود',
+    copied:'تم النسخ',
     sc_space:'تجميد', sc_c:'لقطة', sc_m:'مرآة', sc_r:'تدوير', sc_f:'ملء الشاشة',
     sc_p:'PiP', sc_s:'شاشة', sc_0:'إعادة الزووم', sc_z:'لوحة الزووم',
     sc_l:'ليزر', sc_y:'قلم تظليل', sc_h:'بقعة ضوء', sc_u:'مسطرة', sc_g:'شبكة', sc_q:'الصورة', sc_t:'شبه منحرف',
@@ -1376,7 +1494,22 @@ function applyLang() {
   setText('tab-btn-general', T.settings); setText('tab-btn-about', T.tab_about);
   setText('about-tagline', T.tagline || 'A simple document camera app');
   setText('about-repo-label', T.about_repo); setText('about-url-label', T.about_url);
+  setText('about-repo-note', T.about_bug || '');
+  setText('about-author-label', T.about_author || 'Author');
+  setText('t-main-cam', T.main_cam || 'Main');
+  setText('t-sub-cam', T.sub_cam || 'Sub');
+  setText('t-bg-color', T.bg_color || 'Color');
+  setText('t-bg-image', T.bg_image || 'Image');
+  setText('t-bg-image-btn', T.bg_load || 'Load');
+  setText('t-bg-clear', T.bg_clear || 'Reset');
+  setText('t-ui-theme', T.ui_theme || 'UI');
+  setText('t-ui-light', (T.ui_white || 'White'));
+  setText('t-ui-dark-btn', (T.ui_black || 'Black'));
+  // Update screen option label in cam2-select
+  const screenOpt = cam2Select.querySelector('option[value="__screen__"]');
+  if (screenOpt) screenOpt.textContent = (cam2Select.options.length > 1 ? '── ' : '') + (T.screen || 'Screen Share');
   // tooltips
+  setTip('bg-btn', (T.background || 'Background') + ' (B)');
   setTip('screen-btn', T.screen);
   setTip('settings-btn', T.settings);
   setTip('freeze-btn', T.freeze + ' (Space)');
@@ -1411,14 +1544,14 @@ function buildShortcuts() {
     ['Space', T.sc_space], ['C', T.sc_c], ['M', T.sc_m], ['R', T.sc_r],
     ['T', T.sc_t], ['F', T.sc_f], ['P', T.sc_p], ['S', T.sc_s],
     ['L', T.sc_l], ['Y', T.sc_y || 'Highlighter'], ['H', T.sc_h], ['U', T.sc_u], ['G', T.sc_g],
-    ['Q', T.sc_q], ['Z', T.sc_z], ['V', T.layout || 'Layout'], ['X', T.swap || 'Swap'],
+    ['Q', T.sc_q], ['B', T.background || 'Background'], ['Z', T.sc_z], ['V', T.layout || 'Layout'], ['X', T.swap || 'Swap'],
     ['0', T.sc_0], ['+', T.sc_plus],
   ];
   grid.innerHTML = sc.map(([k, v]) => `<div class="shortcut-row"><span>${v}</span><kbd>${k}</kbd></div>`).join('');
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let camStream = null, screenStream = null, cam2Stream = null, frozen = false, mirrorH = false;
+let camStream = null, screenStream = null, cam2Stream = null, cam2IsScreen = false, frozen = false, mirrorH = false;
 let layout = 'single', primarySrc = 'cam', splitPos = 50;
 let cam2DeviceId = null;
 const perCamState = {}; // deviceId → { zoomLevel, panX, panY, keystoneV, keystoneH, keystoneAngle, rotation, mirrorH }
@@ -1426,7 +1559,8 @@ let activeCam1Id = null;
 let pipVideoEl = null, pipSwapBtn = null, dividerDragging = false;
 let rotation = 0, zoomLevel = 1, panX = 0, panY = 0;
 let pipWindow = null, cameras = [];
-let cam1Visible = true, cam2Visible = true, screenVisible = true;
+let cam1Visible = true, cam2Visible = true;
+let bgColor = '#000000', bgImage = null, uiThemeDark = false;
 let isDragging = false, lastX = 0, lastY = 0, pinchDist = 0;
 let uiPinned = false, uiVisible = true, hideTimer = null;
 const isMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || navigator.maxTouchPoints > 2;
@@ -1489,9 +1623,9 @@ const nocam         = document.getElementById('nocam');
 const startBtn      = document.getElementById('start-btn');
 const cam1Check     = document.getElementById('cam1-check');
 const cam2Check     = document.getElementById('cam2-check');
-const screenCheck   = document.getElementById('screen-check');
 const sourceSelect  = document.getElementById('source-select');
 const cam2Select    = document.getElementById('cam2-select');
+const bgPanel       = document.getElementById('bg-panel');
 const freezeOverlay = document.getElementById('freeze-overlay');
 const flash         = document.getElementById('flash');
 const toast         = document.getElementById('toast');
@@ -1573,7 +1707,7 @@ document.getElementById('app').addEventListener('touchstart', () => {
 }, { passive: true });
 uiLayer.addEventListener('mouseenter', cancelHideTimer);
 uiLayer.addEventListener('mouseleave', () => { if (!settingsOverlay.classList.contains('open')) startHideTimer(); });
-[zoomPopup, keystonePanel, gridPanel, qualityPanel, layoutPanel, modePanel].forEach(p => {
+[zoomPopup, keystonePanel, gridPanel, qualityPanel, layoutPanel, bgPanel, modePanel].forEach(p => {
   p.addEventListener('mouseenter', () => { cancelHideTimer(); clearTimeout(modePanelTimer); });
   p.addEventListener('mouseleave', () => { startHideTimer(); if (p === modePanel) startModePanelTimer(); });
 });
@@ -1586,7 +1720,7 @@ pinBtn.addEventListener('click', () => {
 });
 
 // ─── Panel management ─────────────────────────────────────────────────────────
-const toolPanels = [zoomPopup, keystonePanel, gridPanel, qualityPanel, layoutPanel];
+const toolPanels = [zoomPopup, keystonePanel, gridPanel, qualityPanel, layoutPanel, bgPanel];
 function closeToolPanels() { toolPanels.forEach(p => p.classList.remove('open')); }
 // Keep popups clear of the (possibly wrapped) control bar so they never overlap the icons.
 // Layout panel is an exception: show it at the top, just below the topbar.
@@ -1622,19 +1756,17 @@ function togglePanel(panel) {
 // ─── Dual source / layout ─────────────────────────────────────────────────────
 function streamOf(src) {
   if (src === 'cam') return (cam1Visible ? camStream : null);
-  if (src === 'cam2') return (cam2Visible ? cam2Stream : null);
-  if (src === 'screen') return (screenVisible ? screenStream : null);
+  if (src === 'cam2') {
+    const s = cam2IsScreen ? screenStream : cam2Stream;
+    return (cam2Visible && s) ? s : null;
+  }
   return null;
 }
 function secondarySrc() {
-  // cam2 takes priority as secondary when available and not primary
-  if (cam2Stream && primarySrc !== 'cam2') return 'cam2';
-  if (primarySrc === 'cam') return screenStream ? 'screen' : 'cam2';
-  if (primarySrc === 'screen') return camStream ? 'cam' : 'cam2';
-  if (primarySrc === 'cam2') return camStream ? 'cam' : 'screen';
-  return 'screen';
+  if (primarySrc === 'cam2') return camStream ? 'cam' : 'cam2';
+  return 'cam2';
 }
-function anyStream() { return camStream || screenStream || cam2Stream; }
+function anyStream() { return camStream || cam2Stream || (cam2IsScreen ? screenStream : null); }
 
 function attachStreams() {
   const pri = streamOf(primarySrc);
@@ -1642,8 +1774,8 @@ function attachStreams() {
   if (video.srcObject !== pri) { video.srcObject = pri; if (pri) video.play().catch(() => {}); }
   if (videoB.srcObject !== sec) { videoB.srcObject = sec; if (sec) videoB.play().catch(() => {}); }
   if (pipVideoEl) { const s = sec || pri; if (pipVideoEl.srcObject !== s) pipVideoEl.srcObject = s; }
-  // show swap only when there are 2 streams (not cam2 - that's a different slot)
-  if (pipSwapBtn) pipSwapBtn.style.display = (camStream && screenStream) ? 'flex' : 'none';
+  const sec2 = cam2IsScreen ? screenStream : cam2Stream;
+  if (pipSwapBtn) pipSwapBtn.style.display = (camStream && sec2) ? 'flex' : 'none';
   nocam.classList.toggle('hidden', !!anyStream());
   if (appIcon) {
     appIcon.classList.toggle('live', !!anyStream());
@@ -1655,14 +1787,14 @@ function stopAllStreams() {
   if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
   if (cam2Stream) { cam2Stream.getTracks().forEach(t => t.stop()); cam2Stream = null; cam2DeviceId = null; }
   if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+  cam2IsScreen = false;
   if (frozen) toggleFreeze();
   if (activeMode) setActiveMode(null);
   if (layout !== 'single') { layout = 'single'; applyLayout(); }
   primarySrc = 'cam';
-  cam1Visible = true; cam2Visible = true; screenVisible = true;
+  cam1Visible = true; cam2Visible = true;
   cam1Check.checked = false;
   cam2Check.checked = false;
-  screenCheck.checked = false; screenCheck.style.display = 'none';
   document.getElementById('screen-btn').classList.remove('active');
   document.getElementById('layout-btn').style.display = 'none';
   hideTorch(1); hideTorch(2);
@@ -1698,6 +1830,28 @@ function applyCornerPosition() {
   paneB.style.opacity = cornerOpacity; // restore after cssText wipe
 }
 
+function applyBackground() {
+  if (bgImage) {
+    viewport.style.backgroundImage = `url(${bgImage})`;
+    viewport.style.backgroundSize = 'cover';
+    viewport.style.backgroundPosition = 'center';
+    viewport.style.backgroundRepeat = 'no-repeat';
+    viewport.style.backgroundColor = '';
+  } else {
+    viewport.style.backgroundImage = '';
+    viewport.style.backgroundColor = bgColor || '#000';
+  }
+  document.querySelectorAll('.bg-sw').forEach(s =>
+    s.classList.toggle('active', !bgImage && s.dataset.bg === bgColor)
+  );
+}
+function applyUITheme(dark) {
+  uiThemeDark = dark;
+  document.body.classList.toggle('ui-dark', dark);
+  document.getElementById('ui-theme-light').classList.toggle('active', !dark);
+  document.getElementById('ui-theme-dark').classList.toggle('active', dark);
+}
+
 function applyLayout() {
   const paneB = document.getElementById('pane-b');
   // Reset pane-b inline styles when leaving special modes
@@ -1720,20 +1874,17 @@ function applyLayout() {
 
 async function setLayout(l) {
   if (l !== 'single' && !streamOf(secondarySrc())) {
-    // need the second source to show a split — acquire it
-    const sec = secondarySrc();
-    if (sec === 'screen') await startScreen();
-    else if (sec === 'cam2') { showToast(T.no_video); return; } // cam2 must be selected from dropdown
-    else await startCamera(cameras[0] && cameras[0].deviceId);
-    if (!streamOf(secondarySrc())) { showToast(T.no_video); return; }
+    // secondary slot is empty — can't show split without it
+    showToast(T.no_video); return;
   }
   layout = l;
   applyLayout(); attachStreams();
 }
 
 function swapSources() {
-  if (!camStream || !screenStream) { showToast(T.no_video); return; }
-  primarySrc = secondarySrc();
+  const sec2 = cam2IsScreen ? screenStream : cam2Stream;
+  if (!camStream || !sec2) { showToast(T.no_video); return; }
+  primarySrc = (primarySrc === 'cam') ? 'cam2' : 'cam';
   attachStreams(); applyTransform();
   showToast(T.swap || 'Swap');
 }
@@ -1831,11 +1982,77 @@ document.getElementById('layout-btn').addEventListener('click', async e => {
   e.stopPropagation();
   const cycle = { single: 'lr', lr: 'tb', tb: 'single' };
   await setLayout(cycle[layout] || 'single');
+  if (!layoutPanel.classList.contains('open')) {
+    toolPanels.forEach(p => { if (p !== layoutPanel) p.classList.remove('open'); });
+    modePanel.classList.remove('open');
+    positionPanel(layoutPanel);
+    layoutPanel.classList.add('open');
+  }
+  cancelHideTimer();
+});
+// Layout panel opens on hover
+let layoutBtnHoverTimer = null;
+const layoutBtnEl = document.getElementById('layout-btn');
+layoutBtnEl.addEventListener('mouseenter', () => {
+  clearTimeout(layoutBtnHoverTimer);
   toolPanels.forEach(p => { if (p !== layoutPanel) p.classList.remove('open'); });
   modePanel.classList.remove('open');
   positionPanel(layoutPanel);
   layoutPanel.classList.add('open');
   cancelHideTimer();
+});
+layoutBtnEl.addEventListener('mouseleave', () => {
+  layoutBtnHoverTimer = setTimeout(() => {
+    if (!layoutPanel.matches(':hover')) layoutPanel.classList.remove('open');
+  }, 300);
+});
+// Also cancel close timer when moving from button into the panel
+layoutPanel.addEventListener('mouseenter', () => { clearTimeout(layoutBtnHoverTimer); });
+layoutPanel.addEventListener('mouseleave', () => {
+  layoutBtnHoverTimer = setTimeout(() => {
+    if (!layoutPanel.matches(':hover') && !layoutBtnEl.matches(':hover')) layoutPanel.classList.remove('open');
+  }, 300);
+});
+
+// Background button
+document.getElementById('bg-btn').addEventListener('click', e => { e.stopPropagation(); togglePanel(bgPanel); });
+// Background color swatches
+document.querySelectorAll('.bg-sw').forEach(sw => {
+  sw.addEventListener('click', () => {
+    bgColor = sw.dataset.bg;
+    bgImage = null;
+    applyBackground();
+  });
+});
+// Custom color picker
+document.getElementById('bg-color-picker').addEventListener('input', e => {
+  bgColor = e.target.value;
+  bgImage = null;
+  applyBackground();
+});
+// Image load
+document.getElementById('bg-image-btn').addEventListener('click', () => document.getElementById('bg-image-file').click());
+document.getElementById('bg-image-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { bgImage = ev.target.result; bgColor = ''; applyBackground(); };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+});
+document.getElementById('bg-clear-btn').addEventListener('click', () => {
+  bgColor = '#000000'; bgImage = null;
+  document.getElementById('bg-color-picker').value = '#000000';
+  applyBackground();
+});
+// UI theme buttons
+document.getElementById('ui-theme-light').addEventListener('click', () => applyUITheme(false));
+document.getElementById('ui-theme-dark').addEventListener('click', () => applyUITheme(true));
+// Copy URL buttons in About panel
+document.querySelectorAll('.copy-url-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    navigator.clipboard.writeText(btn.dataset.copy).then(() => showToast(T.copied || 'Copied!')).catch(() => {});
+  });
 });
 document.querySelectorAll('#layout-types .seg-btn').forEach(btn => {
   btn.addEventListener('click', e => { e.stopPropagation(); setLayout(btn.dataset.layout); });
@@ -1859,34 +2076,37 @@ async function enumerateCameras() {
     });
     if (prevSrc && cameras.some(c => c.deviceId === prevSrc)) sourceSelect.value = prevSrc;
 
-    if (cameras.length >= 2) {
-      // Populate cam2-select
-      const prevSrc2 = cam2Select.value;
-      cam2Select.innerHTML = '';
-      cameras.forEach((cam, i) => {
-        const opt = document.createElement('option');
-        opt.value = cam.deviceId;
-        opt.textContent = cam.label || `Camera ${i + 1}`;
-        cam2Select.appendChild(opt);
-      });
-      // Default cam2 to second camera
-      if (prevSrc2 && cameras.some(c => c.deviceId === prevSrc2)) cam2Select.value = prevSrc2;
-      else if (cameras[1]) cam2Select.value = cameras[1].deviceId;
-      document.getElementById('cam2-group').style.display = '';
-    } else {
-      document.getElementById('cam2-group').style.display = 'none';
-    }
+    // Populate cam2-select with all cameras + screen share option
+    const prevSrc2 = cam2Select.value;
+    const wasScreen = prevSrc2 === '__screen__';
+    cam2Select.innerHTML = '';
+    cameras.forEach((cam, i) => {
+      const opt = document.createElement('option');
+      opt.value = cam.deviceId;
+      opt.textContent = cam.label || `Camera ${i + 1}`;
+      cam2Select.appendChild(opt);
+    });
+    // Add screen share as an option (with a visual divider if cameras exist)
+    const screenOpt = document.createElement('option');
+    screenOpt.value = '__screen__';
+    screenOpt.textContent = (cameras.length ? '── ' : '') + (T.screen || 'Screen Share');
+    cam2Select.appendChild(screenOpt);
+
+    // Restore selection
+    if (wasScreen) cam2Select.value = '__screen__';
+    else if (prevSrc2 && cameras.some(c => c.deviceId === prevSrc2)) cam2Select.value = prevSrc2;
+    else if (cameras.length >= 2) cam2Select.value = cameras[1].deviceId;
+    else if (cameras.length === 1) cam2Select.value = cameras[0].deviceId;
+    else cam2Select.value = '__screen__';
   } catch(e) {}
 }
 
 function updateLayoutBtnVisibility() {
-  const hasSecond = !!(cam2Stream || screenStream);
-  document.getElementById('layout-btn').style.display = hasSecond ? '' : 'none';
+  const sec2 = cam2IsScreen ? screenStream : cam2Stream;
+  document.getElementById('layout-btn').style.display = sec2 ? '' : 'none';
   cam1Check.checked = !!camStream && cam1Visible;
-  cam2Check.checked = !!cam2Stream && cam2Visible;
-  screenCheck.style.display = screenStream ? '' : 'none';
-  screenCheck.checked = !!screenStream && screenVisible;
-  document.getElementById('screen-btn').classList.toggle('active', !!screenStream);
+  cam2Check.checked = !!(sec2) && cam2Visible;
+  document.getElementById('screen-btn').classList.toggle('active', !!(cam2IsScreen && screenStream));
 }
 
 // ─── Torch (flashlight) ──────────────────────────────────────────────────────
@@ -2002,22 +2222,37 @@ async function startCam2(deviceId) {
 }
 
 async function startScreen() {
+  // Route screen share into the cam2 slot
+  cam2Select.value = '__screen__';
+  await startScreenAsCam2();
+}
+
+async function startScreenAsCam2() {
   showLoading(true);
   try {
+    // Stop any camera in the cam2 slot
+    if (cam2Stream && !cam2IsScreen) {
+      cam2Stream.getTracks().forEach(t => t.stop()); cam2Stream = null; cam2DeviceId = null;
+    }
+    // Stop existing screen share
     if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false });
+    cam2IsScreen = true;
+    cam2Visible = true;
+    cam2Check.checked = true;
     showLoading(false);
-    screenVisible = true;
     screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-      screenStream = null; screenVisible = true;
-      if (primarySrc === 'screen') primarySrc = 'cam';
+      screenStream = null; cam2IsScreen = false;
+      cam2Check.checked = false;
+      document.getElementById('screen-btn').classList.remove('active');
+      // Reset cam2-select to first camera option
+      const firstCamOpt = cam2Select.querySelector('option:not([value="__screen__"])');
+      if (firstCamOpt) cam2Select.value = firstCamOpt.value;
+      if (primarySrc === 'cam2' && !cam2Stream) primarySrc = 'cam';
       if (layout !== 'single' && !cam2Stream) { layout = 'single'; applyLayout(); }
-      attachStreams();
-      updateLayoutBtnVisibility();
+      attachStreams(); updateLayoutBtnVisibility();
     });
-    // If camera is active keep it as primary; screen becomes secondary
-    if (layout === 'single' && !camStream) primarySrc = 'screen';
-    // Auto-split when cam is also active
+    if (primarySrc === 'cam' && !camStream) primarySrc = 'cam2';
     if (camStream && layout === 'single') {
       layout = window.innerWidth >= window.innerHeight ? 'lr' : 'tb';
       applyLayout();
@@ -2026,6 +2261,10 @@ async function startScreen() {
     updateLayoutBtnVisibility();
   } catch(e) {
     showLoading(false);
+    cam2IsScreen = false;
+    // Reset dropdown if user cancelled
+    const firstCamOpt = cam2Select.querySelector('option:not([value="__screen__"])');
+    if (firstCamOpt && cam2Select.value === '__screen__') cam2Select.value = firstCamOpt.value;
     if (e.name !== 'AbortError' && e.name !== 'NotAllowedError') showToast(e.message);
   }
 }
@@ -2281,7 +2520,7 @@ async function startDocPiP() {
     sb.addEventListener('click', () => swapSources());
     pd.body.appendChild(sb);
     pipSwapBtn = sb;
-    sb.style.display = (camStream && screenStream) ? 'flex' : 'none';
+    sb.style.display = (camStream && (cam2IsScreen ? screenStream : cam2Stream)) ? 'flex' : 'none';
     pipWindow.addEventListener('pagehide', () => { pipWindow = null; pipVideoEl = null; pipSwapBtn = null; setPipActive(false); showToast(T.pip_exit); });
     setPipActive(true); showToast(T.pip);
   } catch(e) { await startVideoPiP(); }
@@ -3037,19 +3276,19 @@ startBtn.addEventListener('click', async () => {
   if (cameras.length > 0) await startCamera(cameras[0]?.deviceId); else await startScreen();
 });
 document.getElementById('screen-btn').addEventListener('click', async () => {
-  if (screenStream) {
+  if (cam2IsScreen && screenStream) {
+    // Stop screen share, revert cam2 slot
     screenStream.getTracks().forEach(t => t.stop()); screenStream = null;
-    if (primarySrc === 'screen') primarySrc = 'cam';
+    cam2IsScreen = false;
+    cam2Check.checked = false;
+    if (primarySrc === 'cam2' && !cam2Stream) primarySrc = 'cam';
     if (layout !== 'single' && !cam2Stream) { layout = 'single'; applyLayout(); }
+    const firstCamOpt = cam2Select.querySelector('option:not([value="__screen__"])');
+    if (firstCamOpt) cam2Select.value = firstCamOpt.value;
     attachStreams(); updateLayoutBtnVisibility();
   } else {
-    // Exclusive with cam2
-    if (cam2Stream) {
-      cam2Stream.getTracks().forEach(t => t.stop()); cam2Stream = null; cam2DeviceId = null;
-      if (primarySrc === 'cam2') primarySrc = 'cam';
-      if (layout !== 'single') { layout = 'single'; applyLayout(); }
-    }
-    await startScreen();
+    cam2Select.value = '__screen__';
+    await startScreenAsCam2();
   }
 });
 document.getElementById('freeze-btn').addEventListener('click', toggleFreeze);
@@ -3108,35 +3347,43 @@ sourceSelect.addEventListener('change', async () => {
   if (camStream) await startCamera(sourceSelect.value);
 });
 
-// Cam2 checkbox: show/hide camera 2; starts stream if not yet connected (exclusive with screen share)
+// Cam2 checkbox: show/hide secondary source (camera or screen share); starts stream if not yet connected
 cam2Check.addEventListener('change', async () => {
-  if (cam2Stream) {
-    // Stream already running — just toggle display visibility
+  const sec2 = cam2IsScreen ? screenStream : cam2Stream;
+  if (sec2) {
+    // Stream running — just toggle display visibility
     cam2Visible = cam2Check.checked;
     attachStreams(); updateLayoutBtnVisibility();
   } else if (cam2Check.checked) {
-    // Not yet connected — stop screen share (exclusive) and start cam2
-    if (screenStream) {
-      screenStream.getTracks().forEach(t => t.stop()); screenStream = null;
-      if (primarySrc === 'screen') primarySrc = 'cam';
-      document.getElementById('screen-btn').classList.remove('active');
+    // Not yet connected — start the selected source
+    if (cam2Select.value === '__screen__') {
+      await startScreenAsCam2();
+    } else {
+      const id = cam2Select.value || cameras.find(c => c.deviceId !== activeCam1Id)?.deviceId;
+      if (id) await startCam2(id); else { cam2Check.checked = false; showToast(T.no_video); }
     }
-    const id = cam2Select.value || cameras.find(c => c.deviceId !== activeCam1Id)?.deviceId;
-    if (id) await startCam2(id); else { cam2Check.checked = false; showToast(T.no_video); }
-  } else {
-    // Unchecked and cam2 not running — noop
   }
 });
 
-// Cam2 select: switch camera 2 device
+// Cam2 select: switch secondary source (camera or screen share)
 cam2Select.addEventListener('change', async () => {
-  if (cam2Stream) await startCam2(cam2Select.value);
-});
-
-// Screen share checkbox: show/hide without stopping the stream
-screenCheck.addEventListener('change', () => {
-  screenVisible = screenCheck.checked;
-  attachStreams(); updateLayoutBtnVisibility();
+  if (cam2Select.value === '__screen__') {
+    if (!cam2IsScreen) {
+      if (cam2Stream) { cam2Stream.getTracks().forEach(t => t.stop()); cam2Stream = null; cam2DeviceId = null; }
+      if (cam2Check.checked) await startScreenAsCam2();
+    }
+  } else {
+    if (cam2IsScreen) {
+      // Switch from screen to camera
+      if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+      cam2IsScreen = false;
+      document.getElementById('screen-btn').classList.remove('active');
+      if (cam2Check.checked) await startCam2(cam2Select.value);
+      else { attachStreams(); updateLayoutBtnVisibility(); }
+    } else if (cam2Stream) {
+      await startCam2(cam2Select.value);
+    }
+  }
 });
 
 // Corner position buttons
@@ -3195,6 +3442,7 @@ document.addEventListener('keydown', e => {
     case 'u': toggleRuler(false); break;
     case 'g': document.getElementById('grid-btn').click(); break;
     case 'q': togglePanel(qualityPanel); break;
+    case 'b': togglePanel(bgPanel); break;
     case 'v': togglePanel(layoutPanel); break;
     case 'x': swapSources(); break;
     case 'escape':
@@ -3241,6 +3489,7 @@ function collectSettings() {
     qBright, qContrast, qSat, wbR, wbG, wbB, qInvert,
     layout, splitPos, primarySrc,
     overlayOpacity, cornerOpacity, cornerPos,
+    bgColor, bgImage, uiThemeDark,
     lang: currentLangCode,
   };
 }
@@ -3265,6 +3514,10 @@ function applyLoadedSettings(s) {
   if (s.overlayOpacity != null) { overlayOpacity = s.overlayOpacity; document.getElementById('overlay-opacity-slider').value = Math.round(overlayOpacity * 100); document.getElementById('overlay-opacity-val').textContent = Math.round(overlayOpacity * 100) + '%'; }
   if (s.cornerOpacity != null) { cornerOpacity = s.cornerOpacity; document.getElementById('corner-opacity-slider').value = Math.round(cornerOpacity * 100); document.getElementById('corner-opacity-val').textContent = Math.round(cornerOpacity * 100) + '%'; }
   if (s.cornerPos) { cornerPos = s.cornerPos; document.querySelectorAll('.cpos-btn').forEach(b => b.classList.toggle('active', b.dataset.pos === cornerPos)); }
+  if (s.bgColor != null) { bgColor = s.bgColor; document.getElementById('bg-color-picker').value = bgColor || '#000000'; }
+  if (s.bgImage != null) bgImage = s.bgImage;
+  applyBackground();
+  if (s.uiThemeDark != null) applyUITheme(s.uiThemeDark);
   if (s.lang && LANGS[s.lang]) { currentLangCode = s.lang; try { localStorage.setItem('doccam-lang', currentLangCode); } catch(e) {} }
   // Sync all UI sliders
   const sv = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
@@ -3347,6 +3600,7 @@ function wrapSliders() {
 showLoading(false);
 nocam.classList.remove('hidden');
 loadSavedSettings(); // load before applyLang so lang is applied
+applyBackground();
 applyLang();
 wrapSliders();
 applyFilters();
