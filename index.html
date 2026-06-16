@@ -82,15 +82,15 @@
   /* ── Pin button (always above controls bar, positioned by JS) ── */
   #pin-btn {
     position: absolute; right: 12px; z-index: 30;
-    width: 34px; height: 34px; border-radius: var(--radius-sm);
-    border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.05); color: var(--text2);
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.06); color: var(--text2);
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; opacity: 0.5;
+    cursor: pointer; opacity: 0.45;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     transition: background var(--tr), color var(--tr), opacity var(--tr), border-color var(--tr);
   }
-  #pin-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); opacity: 1; }
-  #pin-btn.pinned { color: var(--accent); background: rgba(79,142,247,0.15); border-color: rgba(79,142,247,0.4); opacity: 1; }
+  #pin-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); opacity: 1; }
+  #pin-btn.pinned { color: var(--accent); background: rgba(79,142,247,0.18); border-color: rgba(79,142,247,0.45); opacity: 1; }
 
   /* ── Top bar ── */
   #topbar {
@@ -286,7 +286,8 @@
     padding: 4px 8px; border-radius: 6px; font-size: 11px; white-space: nowrap;
     opacity: 0; pointer-events: none; transition: opacity 0.15s; z-index: 100;
   }
-  [data-tip]:hover::after { opacity: 1; }
+  @media (hover: hover) { [data-tip]:hover::after { opacity: 1; } }
+  [data-tip].tip-show::after { opacity: 1; }
   #topbar [data-tip]::after { bottom: auto; top: calc(100% + 8px); }
 
   /* ── Settings panel ── */
@@ -499,6 +500,7 @@
   body.hc .popup, body.hc #zoom-popup, body.hc #mode-panel, body.hc #settings-panel { background: #000; border-color: #fff; }
   body.hc [data-tip]::after { background: #000; border: 1px solid #fff; }
   body.hc #pin-btn { background: rgba(0,0,0,0.9); border-color: #fff; color: #fff; opacity: 1; }
+  body.hc #pin-btn.pinned { background: #fff; border-color: #fff; color: #000; }
   body.hc #start-btn { background: #fff; color: #000; }
   body.hc .seg-btn, body.hc .sz-btn, body.hc .hl-sz-btn, body.hc .shape-btn, body.hc .toggle-btn, body.hc .reset-btn { border-color: #fff; color: #fff; }
   body.hc .seg-btn.active, body.hc .sz-btn.active, body.hc .hl-sz-btn.active, body.hc .shape-btn.active, body.hc .toggle-btn.active { background: #fff; color: #000; }
@@ -2239,12 +2241,20 @@ async function probeDualCam() {
   dualCamProbed = true;
   const otherId = cameras.find(c => c.deviceId !== activeCam1Id)?.deviceId;
   if (!otherId) return;
+  const mainKilled = () => !camStream || !camStream.active || camStream.getVideoTracks().every(t => t.readyState === 'ended');
   try {
     const test = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: otherId } }, audio: false });
     test.getTracks().forEach(t => t.stop());
+    if (mainKilled()) {
+      // Probe itself killed the main stream — dual cam not supported
+      disableCam2UI();
+      showToast(T.dual_cam_unsupported || 'Multiple cameras not supported on this device', 5000);
+      await startCamera(activeCam1Id);
+    }
   } catch(e) {
     disableCam2UI();
     showToast(T.dual_cam_unsupported || 'Multiple cameras not supported on this device', 5000);
+    if (mainKilled()) await startCamera(activeCam1Id);
   }
 }
 
@@ -2305,6 +2315,9 @@ async function startCam2(deviceId) {
     }
     cam2Select.value = '';
     startCam2(null);
+    // Restart main camera if the attempt killed its stream
+    const mainKilled = !camStream || !camStream.active || camStream.getVideoTracks().every(t => t.readyState === 'ended');
+    if (mainKilled && activeCam1Id) await startCamera(activeCam1Id);
   }
 }
 
@@ -3724,6 +3737,20 @@ if (isMobile()) {
 startHideTimer();
 resizeCanvases();
 repositionPinBtn();
+
+// Mobile tooltip: show on touch for 2s, then auto-hide
+if (isMobile()) {
+  let _tipEl = null, _tipTimer = null;
+  document.addEventListener('touchstart', e => {
+    const btn = e.target.closest('[data-tip]');
+    if (_tipEl) { _tipEl.classList.remove('tip-show'); clearTimeout(_tipTimer); _tipEl = null; }
+    if (btn) {
+      _tipEl = btn;
+      btn.classList.add('tip-show');
+      _tipTimer = setTimeout(() => { btn.classList.remove('tip-show'); _tipEl = null; }, 2000);
+    }
+  }, { passive: true });
+}
 
 navigator.mediaDevices.enumerateDevices().then(devs => {
   const cams = devs.filter(d => d.kind === 'videoinput');
