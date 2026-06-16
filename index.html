@@ -643,7 +643,7 @@
     </div>
 
     <div id="controls">
-      <button class="btn" id="pan-reset-btn" style="display:none">
+      <button class="btn" id="pan-reset-btn" disabled>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <circle cx="12" cy="12" r="5"/>
           <line x1="12" y1="2" x2="12" y2="22"/>
@@ -2153,7 +2153,7 @@ function updateLayoutBtnVisibility() {
   document.getElementById('layout-btn').style.display = sec2 ? '' : 'none';
   cam1Check.checked = !!camStream && cam1Visible;
   cam2Check.checked = !!(sec2) && cam2Visible;
-  document.getElementById('screen-btn').classList.toggle('active', !!(cam2IsScreen && screenStream));
+  document.getElementById('screen-btn').classList.toggle('active', !!(screenStream && screenStream.active));
 }
 
 // ─── Torch (flashlight) ──────────────────────────────────────────────────────
@@ -2290,24 +2290,25 @@ async function startScreenAsCam2() {
     if (cam2Stream && !cam2IsScreen) {
       cam2Stream.getTracks().forEach(t => t.stop()); cam2Stream = null; cam2DeviceId = null;
     }
-    // Stop existing screen share
-    if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
-    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false });
+    // Reuse existing screen share stream if still active
+    if (!screenStream || !screenStream.active) {
+      if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+      screenStream = await navigator.mediaDevices.getDisplayMedia({ video: { cursor: 'always' }, audio: false });
+      screenStream.getVideoTracks()[0].addEventListener('ended', () => {
+        screenStream = null; cam2IsScreen = false;
+        cam2Check.checked = false;
+        document.getElementById('screen-btn').classList.remove('active');
+        const firstCamOpt = cam2Select.querySelector('option:not([value="__screen__"])');
+        if (firstCamOpt) cam2Select.value = firstCamOpt.value;
+        if (primarySrc === 'cam2' && !cam2Stream) primarySrc = 'cam';
+        if (layout !== 'single' && !cam2Stream) { layout = 'single'; applyLayout(); }
+        attachStreams(); updateLayoutBtnVisibility();
+      });
+    }
     cam2IsScreen = true;
     cam2Visible = true;
     cam2Check.checked = true;
     showLoading(false);
-    screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-      screenStream = null; cam2IsScreen = false;
-      cam2Check.checked = false;
-      document.getElementById('screen-btn').classList.remove('active');
-      // Reset cam2-select to first camera option
-      const firstCamOpt = cam2Select.querySelector('option:not([value="__screen__"])');
-      if (firstCamOpt) cam2Select.value = firstCamOpt.value;
-      if (primarySrc === 'cam2' && !cam2Stream) primarySrc = 'cam';
-      if (layout !== 'single' && !cam2Stream) { layout = 'single'; applyLayout(); }
-      attachStreams(); updateLayoutBtnVisibility();
-    });
     if (primarySrc === 'cam' && !camStream) primarySrc = 'cam2';
     if (camStream && layout === 'single') {
       layout = window.innerWidth >= window.innerHeight ? 'lr' : 'tb';
@@ -2355,7 +2356,7 @@ function applyTransform() {
 
 function updatePanResetBtn() {
   const btn = document.getElementById('pan-reset-btn');
-  if (btn) btn.style.display = (panX !== 0 || panY !== 0) ? '' : 'none';
+  if (btn) btn.disabled = (panX === 0 && panY === 0);
 }
 
 function applyFilters() {
@@ -3261,7 +3262,7 @@ overlay.addEventListener('mousedown', e => {
 document.addEventListener('mousemove', e => {
   if (!isDragging) return;
   dragMoved = true;
-  panX += e.clientX - lastX; panY += e.clientY - lastY;
+  panX += (mirrorH ? -(e.clientX - lastX) : e.clientX - lastX); panY += e.clientY - lastY;
   lastX = e.clientX; lastY = e.clientY; applyTransform();
 });
 document.addEventListener('mouseup', () => { isDragging = false; overlay.style.cursor = ''; });
@@ -3282,7 +3283,7 @@ overlay.addEventListener('touchmove', e => {
   e.preventDefault();
   touchMoved = true;
   if (e.touches.length === 1 && isDragging) {
-    panX += e.touches[0].clientX - lastX; panY += e.touches[0].clientY - lastY;
+    panX += (mirrorH ? -(e.touches[0].clientX - lastX) : e.touches[0].clientX - lastX); panY += e.touches[0].clientY - lastY;
     lastX = e.touches[0].clientX; lastY = e.touches[0].clientY; applyTransform();
   } else if (e.touches.length === 2) {
     const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
@@ -3350,8 +3351,8 @@ document.getElementById('pan-reset-btn').addEventListener('click', () => {
 });
 
 document.getElementById('screen-btn').addEventListener('click', async () => {
-  if (cam2IsScreen && screenStream) {
-    // Stop screen share, revert cam2 slot
+  if (screenStream) {
+    // Explicitly stop screen share
     screenStream.getTracks().forEach(t => t.stop()); screenStream = null;
     cam2IsScreen = false;
     cam2Check.checked = false;
@@ -3444,14 +3445,18 @@ cam2Select.addEventListener('change', async () => {
   if (cam2Select.value === '__screen__') {
     if (!cam2IsScreen) {
       if (cam2Stream) { cam2Stream.getTracks().forEach(t => t.stop()); cam2Stream = null; cam2DeviceId = null; }
-      if (cam2Check.checked) await startScreenAsCam2();
+      if (screenStream && screenStream.active) {
+        // Background stream still alive — reuse without prompting
+        cam2IsScreen = true;
+        if (cam2Check.checked) { cam2Visible = true; attachStreams(); updateLayoutBtnVisibility(); }
+      } else if (cam2Check.checked) {
+        await startScreenAsCam2();
+      }
     }
   } else {
     if (cam2IsScreen) {
-      // Switch from screen to camera
-      if (screenStream) { screenStream.getTracks().forEach(t => t.stop()); screenStream = null; }
+      // Switch from screen to camera — keep screenStream alive in background
       cam2IsScreen = false;
-      document.getElementById('screen-btn').classList.remove('active');
       if (cam2Check.checked) await startCam2(cam2Select.value);
       else { attachStreams(); updateLayoutBtnVisibility(); }
     } else if (cam2Stream) {
