@@ -5,7 +5,7 @@
 
   **A simple document camera app — runs entirely in your browser.**
 
-  [**▶ Live demo**](https://akichika.github.io/doc-camera/) · [日本語](#日本語)
+  [**▶ Live demo**](https://akichika.github.io/doc-cam/) · [日本語](#日本語)
 
 </div>
 
@@ -39,6 +39,30 @@ Everything happens locally in the browser using the `getUserMedia` / `getDisplay
 - 📲 **Installable PWA** — install from Chrome or Edge on desktop/Android; on iPhone tap **Share → Add to Home Screen** in Safari (iOS 16.4+).
 - ⌨️ **Keyboard shortcuts** and tooltips throughout, with an auto-hiding UI.
 
+## Install as an app (PWA)
+
+DocCam can be installed as a standalone app on any platform — no app store required.
+
+### iPhone / iPad (iOS 16.4+)
+1. Open [https://akichika.github.io/doc-cam/](https://akichika.github.io/doc-cam/) in **Safari**.
+2. Tap the **Share** button (rectangle with arrow) at the bottom of the screen.
+3. Tap **Add to Home Screen**.
+4. Tap **Add** — the app icon appears on your home screen.
+
+> Safari only. Chrome and other browsers on iOS cannot install PWAs.
+
+### Android
+1. Open [https://akichika.github.io/doc-cam/](https://akichika.github.io/doc-cam/) in **Chrome**.
+2. Tap the **⋮ menu** (top right) → **Add to Home screen** (or an install banner may appear automatically).
+3. Tap **Install** — the app icon appears on your home screen and in the app drawer.
+
+### Windows / Mac / Linux (desktop)
+1. Open [https://akichika.github.io/doc-cam/](https://akichika.github.io/doc-cam/) in **Chrome** or **Edge**.
+2. Click the **install icon** (⊕) in the address bar (right side), or open the browser menu → **Install DocCam**.
+3. Click **Install** — the app opens in its own window and a shortcut is added to your taskbar / dock.
+
+> Firefox does not support PWA installation.
+
 ## Mobile limitations
 
 | Feature | iOS Safari | Android Chrome |
@@ -66,7 +90,7 @@ Everything happens locally in the browser using the `getUserMedia` / `getDisplay
 
 ## Usage
 
-1. Open the [live demo](https://akichika.github.io/doc-camera/) (or run it locally — see below).
+1. Open the [live demo](https://akichika.github.io/doc-cam/) (or run it locally — see below).
 2. Click **Start** (the DocCam icon at top-left), then allow camera access.
 3. Use the **top bar** to select cameras, toggle screen share, and switch layout.
 4. Use the **bottom toolbar** for zoom, freeze, rotate, tools, and settings.
@@ -111,7 +135,9 @@ DocCam has no server component. Camera and screen frames stay in your browser an
 
 **内蔵カメラやWebカメラを書画カメラとして使えるアプリです。インストール不要、ブラウザだけで完結します。**
 
-[**▶ デモを開く**](https://akichika.github.io/doc-camera/)ズーム・静止・スクリーンショット保存に加え、レーザーポインター／蛍光ペン／スポットライト／ルーラー／グリッド／台形補正／画質調整などをブラウザ内だけで実行します。映像はサーバーに送信されず、すべて手元で処理されます（バックエンド無し・ビルド不要の単一 `index.html`）。
+[**▶ デモを開く**](https://akichika.github.io/doc-cam/)
+
+ズーム・静止・スクリーンショット保存に加え、レーザーポインター／蛍光ペン／スポットライト／ルーラー／グリッド／台形補正／画質調整などをブラウザ内だけで実行します。映像はサーバーに送信されず、すべて手元で処理されます（バックエンド無し・ビルド不要の単一 `index.html`）。
 
 ### 主な機能
 
@@ -135,6 +161,30 @@ DocCam has no server component. Camera and screen frames stay in your browser an
 - 🌗 **ハイコントラストモード**
 - 🌐 **9言語対応**（EN / 日本語 / 中文 / 한국어 / ES / FR / DE / PT / AR）自動判定
 - 📲 **PWA対応** — Chrome・Edgeからインストール可能（iPhoneはSafariで「ホーム画面に追加」）
+
+### アプリとしてインストール（PWA）
+
+アプリストア不要で、どのプラットフォームにもスタンドアロンアプリとしてインストールできます。
+
+#### iPhone / iPad（iOS 16.4以降）
+1. **Safari** で [https://akichika.github.io/doc-cam/](https://akichika.github.io/doc-cam/) を開く。
+2. 画面下部の**共有ボタン**（四角＋矢印）をタップ。
+3. **「ホーム画面に追加」** をタップ。
+4. **「追加」** をタップ — ホーム画面にアイコンが追加されます。
+
+> SafariのみPWAインストールに対応しています。iOS版ChromeなどではPWAインストールできません。
+
+#### Android
+1. **Chrome** で [https://akichika.github.io/doc-cam/](https://akichika.github.io/doc-cam/) を開く。
+2. 右上の **⋮ メニュー** → **「ホーム画面に追加」**（または画面下部にインストールバナーが自動表示される場合あり）をタップ。
+3. **「インストール」** をタップ — ホーム画面とアプリ一覧にアイコンが追加されます。
+
+#### Windows / Mac / Linux（デスクトップ）
+1. **Chrome** または **Edge** で [https://akichika.github.io/doc-cam/](https://akichika.github.io/doc-cam/) を開く。
+2. アドレスバー右端の**インストールアイコン（⊕）**をクリック、またはブラウザメニュー → **「DocCam をインストール」** をクリック。
+3. **「インストール」** をクリック — 専用ウィンドウで起動し、タスクバー／Dockにショートカットが追加されます。
+
+> FirefoxはPWAインストールに対応していません。
 
 ### モバイルの制限事項
 
@@ -163,7 +213,7 @@ DocCam has no server component. Camera and screen frames stay in your browser an
 
 ### 使い方
 
-1. [デモ](https://akichika.github.io/doc-camera/) を開く（またはローカル起動）。
+1. [デモ](https://akichika.github.io/doc-cam/) を開く（またはローカル起動）。
 2. 左上の**DocCamアイコン**をクリックしてカメラを許可。
 3. **トップバー**でカメラ選択、画面共有の開始、レイアウト切り替えを操作。
 4. **下部ツールバー**でズーム・静止・回転・各ツール・設定を操作。
